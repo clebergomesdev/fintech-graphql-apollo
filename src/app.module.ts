@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { GATEWAY_BUILD_SERVICE, GraphQLGatewayModule } from '@nestjs/graphql';
 import { RemoteGraphQLDataSource } from '@apollo/gateway';
+import { ConfigModule } from '@nestjs/config';
 // import { decode } from 'jsonwebtoken';
 
 class AuthenticatedDataSource extends RemoteGraphQLDataSource {
@@ -30,17 +31,16 @@ class BuildServiceModule {}
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     GraphQLGatewayModule.forRootAsync({
       useFactory: async () => ({
         gateway: {
-          serviceList: [
-            // { name: 'users', url: 'http://user-service/graphql' },
-            // { name: 'posts', url: 'http://post-service/graphql' },
-            {
-              name: 'financial',
-              url: 'https://staging-financial-api.herokuapp.com/graphql',
-            },
-          ],
+          serviceList: Object.entries(process.env)
+            .map(([key, value]) => ({
+              name: key,
+              url: value,
+            }))
+            .filter((item) => item['name'].includes('APOLLO_')),
         },
         server: {
           playground: true,
